@@ -1,4 +1,7 @@
 # AEM Brackets Extension
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/adobe/aem-brackets-extension.svg)](https://greenkeeper.io/)
+
 ![](https://raw.githubusercontent.com/wiki/adobe/aem-brackets-extension/screenshots/brackets.png)
 
 This extension provides a smooth workflow to edit AEM components and client libraries, and leverages the power of the [Brackets](http://brackets.io) code editor, which gives access from within the code editor to Photoshop files and layers. The easy synchronization provided by the AEM Brackets Extension (no Maven or File Vault required) increases developer efficiency and also helps front-end developers with limited AEM knowledge to participate on projects. This extension also provides some [HTL](https://github.com/adobe/htl-spec) support, a template language that takes away the complexity of JSP to make component development easier and more secure.

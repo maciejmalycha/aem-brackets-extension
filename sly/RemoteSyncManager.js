@@ -39,6 +39,7 @@ define(function (require, exports, module) {
             pathToSync = path || selected.fullPath;
         }
         if (!cmd) {
+            console.log('_handleSyncToRemote()');
             ProjectUtils.getJcrRoot().then(
                 function (root) {
                     if (root && pathToSync.indexOf(root) === 0) {
@@ -61,7 +62,24 @@ define(function (require, exports, module) {
                     }
                 },
                 function (err) {
-                    ToolBar.updateStatusIndicator(true, ToolBar.states.SYNC_NONE, 'Error', err.message);
+                    console.log('No JCR root, looking for package info');
+                    ProjectUtils.getPackageInfo().then(
+                        function (packageInfo) {
+                            ToolBar.updateStatusIndicator(true, ToolBar.states.SYNC_IN_PROGRESS);
+                            var rootPath = ProjectManager.getProjectRoot().fullPath;
+                            return SlyDomain.exec('pushVaultCE', rootPath, packageInfo).then(
+                                function (fileSyncStatus) {
+                                    _calculateSyncStatus(fileSyncStatus, false);
+                                },
+                                function (err) {
+                                    ToolBar.updateStatusIndicator(true, ToolBar.states.SYNC_NONE, 'Error', err);
+                                }
+                            );
+                        },
+                        function (err) {
+                            ToolBar.updateStatusIndicator(true, ToolBar.states.SYNC_NONE, 'Error', err.message);
+                        }
+                    ).done();
                 }
             ).done();
         } else {
@@ -201,14 +219,8 @@ define(function (require, exports, module) {
     }
 
     function exportContentPackage() {
-        ProjectUtils.getJcrRoot().then(
-            function (root) {
-                CommandManager.get(CMD_PUSH_REMOTE).execute(root);
-            },
-            function (err) {
-                ToolBar.updateStatusIndicator(true, ToolBar.states.SYNC_NONE, 'Error', err.message);
-            }
-        ).done();
+        var rootPath = ProjectManager.getProjectRoot().fullPath;
+        CommandManager.get(CMD_PUSH_REMOTE).execute(rootPath);
     }
 
     function importContentPackage() {

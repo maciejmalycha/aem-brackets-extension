@@ -38,6 +38,21 @@ define(function (require, exports, module) {
         return deferred;
     }
 
+    function getPackageInfo() {
+        var deferred = $.Deferred();
+        var packageInfoPath = ProjectManager.getProjectRoot().fullPath + '/clientlibs/editable/package_info.json';
+        FileSystem.resolve(packageInfoPath, function (err, entry, stat) {
+            if (err) {
+                deferred.reject(new Error('Cannot find file ' + packageInfoPath + '. Reason: ' + err));
+            } else {
+                $.getJSON(packageInfoPath, function(json) {
+                    deferred.resolve(json);
+                });
+            }
+        });
+        return deferred;
+    }
+
     /**
      * Retrieves the absolute path to the <code>filter-vlt.xml</code> or <code>filter.xml</code> file from the opened content-package
      * project.
@@ -135,6 +150,7 @@ define(function (require, exports, module) {
     }
 
     exports.getJcrRoot = getJcrRoot;
+    exports.getPackageInfo = getPackageInfo;
     exports.getFilterFile = getFilterFile;
     exports.getRemotePathForFile = getRemotePathForFile;
     exports.getFolderContents = getFolderContents;

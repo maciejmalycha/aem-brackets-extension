@@ -936,7 +936,75 @@
         return deferred.promise;
     }
 
+    /*
+     * @param {String} rootPath the path of the package_info.json file
+     */
+
+    function syncCE(server, acceptSelfSignedCert, user, password, rootPath, packageInfo, action) {
+        var deferred = Q.defer(),
+            packageName = 'repo_xxx',
+            packageVersion = new Date().getTime(),
+            fullPackageName = 'tmp/repo/' + packageName + '-' + packageVersion + '.zip';
+        getTempWorkingFolder().then(
+            function (tempFolder) {
+                console.log('Starting copy process');
+                for (var key in packageInfo.clientlibMap) {
+                    var nameInZip = packageInfo.clientlibMap[key].nameInZip;
+                    var path = packageInfo.clientlibMap[key].path;
+                    var srcPath = rootPath + 'clientlibs/editable/' + nameInZip;
+                    var dstPath = tempFolder + '/' + JCR_ROOT + path;
+                    console.log('Copy ' + srcPath + ' to '+ dstPath);
+                    Fs.copy(srcPath, dstPath);
+                }
+                return createFilterFile(tempFolder, packageInfo, packageName, packageVersion).then(
+                    function () {
+                        return createContentPackageArchive(tempFolder, 'pkg');
+                    }
+                ).then(
+                    function (zipFileName) {
+                        return PackMgr.uploadPackage(server, acceptSelfSignedCert, user, password, zipFileName).then(
+                            function () {
+                                return PackMgr.installPackage(server, acceptSelfSignedCert, user, password, fullPackageName);
+                            }
+                        );
+                    }
+                );
+            }
+        ).done();
+        return deferred.promise;
+    }
+
+    function createFilterFile(tempFolder, packageInfo, packageName, packageVersion) {
+        var filterString = '<?xml version="1.0" encoding="UTF-8"?>\n\t<workspaceFilter version="1.0">\n';
+        console.log('createFilterFile()');
+        for (var key in packageInfo.clientlibMap) {
+            filterString += '\t\t<filter root="' + packageInfo.clientlibMap[key].path + '"/>\n';
+        }
+        filterString += '\t</workspaceFilter>\n';
+        return Fs.mkdirp(tempFolder + '/META-INF/vault').then(
+            function () {
+                console.log('Writing file: ' + tempFolder + '/META-INF/vault/filter.xml');
+                return Fs.appendFile(tempFolder + '/META-INF/vault/filter.xml', filterString);
+            }
+        ).then(
+            function () {
+                console.log('Writing file: ' + tempFolder + '/META-INF/vault/properties.xml');
+                return Fs.appendFile(tempFolder + '/META-INF/vault/properties.xml',
+                    '\
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n\
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">\n\
+<properties>\n\
+<entry key="name">' + packageName + '</entry>\n\
+<entry key="version">' + packageVersion + '</entry>\n\
+<entry key="group">tmp/repo</entry>\n\
+</properties>\n'
+                );
+            }
+        );
+    }
+
     exports.sync = sync;
+    exports.syncCE = syncCE;
     exports.PULL = PULL;
     exports.PUSH = PUSH;
 }());

@@ -112,6 +112,17 @@
         );
     }
 
+    function pushVaultCE(rootPath, packageInfo, callback) {
+        return VaultSyncManager.syncCE(_remote, _acceptSelfSignedCertificates, _remoteUser, _remotePassword, rootPath, packageInfo, VaultSyncManager.PUSH).then(
+            function (fileSyncStatus) {
+                callback(null, fileSyncStatus);
+            },
+            function (err) {
+                callback(err.message);
+            }
+        );
+    }
+
     function pullVault(path, filterFile, callback) {
         return VaultSyncManager.sync(_remote, _acceptSelfSignedCertificates, _remoteUser, _remotePassword, path, filterFile, VaultSyncManager.PULL).then(
             function (fileSyncStatus) {
@@ -163,6 +174,18 @@
             [
                 {name: 'localPath', type: 'string', description: 'the local path of the file / folder to push'},
                 {name: 'filterFile', type: 'string', description: 'the path to the project\'s filter.xml file'}
+            ],
+            []
+        );
+        domainManager.registerCommand(
+            'sly',
+            'pushVaultCE',
+            pushVaultCE,
+            true,
+            'pushes a creative exchange package with the selected files to an AEM instance',
+            [
+                {name: 'rootPath', type: 'string', description: 'the local path of the package_info.json file'},
+                {name: 'packageInfo', type: 'object', description: 'deserialized package_info.json content'}
             ],
             []
         );
